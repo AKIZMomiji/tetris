@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>テトリスもどき (機能追加版)</title>
+    <title>leak.gg</title>
+    <link rel="icon" href="https://raw.githubusercontent.com/AKIZMomiji/get/f6542e1cdfb25af73b26c676b2164dea87835740/%E3%82%B3%E3%82%B9%E3%83%81%E3%83%A5%E3%83%BC%E3%83%A01%20(7).svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Silkscreen&display=swap" rel="stylesheet">
     <style>
-        /* CSS: ゲームの見た目 */
         body {
-            /* 全体のフォントをSilkscreenに統一 */
             font-family: "Silkscreen", sans-serif;
             display: flex;
             justify-content: center;
@@ -27,7 +26,6 @@
             display: flex;
             gap: 20px;
         }
-        /* メインのゲームボード */
         canvas#gameCanvas {
             border: 2px solid #333;
             background-color: #eee; 
@@ -48,14 +46,13 @@
         .info-box h3 {
             margin-top: 0;
             margin-bottom: 5px;
-            font-size: 0.9em; /* フォントに合わせて調整 */
+            font-size: 0.9em;
         }
         #score, #level, #lines {
             font-size: 1.2em;
             font-weight: bold;
             color: #d9534f;
         }
-        /* 次のブロック・ホールド表示エリア */
         #nextCanvas, #holdCanvas {
             border: 1px solid #ccc;
             background-color: #f9f9f9;
@@ -68,7 +65,6 @@
             color: white;
             border: none;
             border-radius: 5px;
-            /* ボタンにもフォントを適用 */
             font-family: "Silkscreen", sans-serif;
         }
         button#startButton:hover {
@@ -79,7 +75,7 @@
 <body>
 
     <div>
-        <h1>TETRIS CLONE</h1>
+        <h1>LEAK.GG</h1>
         <div class="game-container">
             <canvas id="gameCanvas"></canvas>
             
@@ -131,19 +127,20 @@
         canvas.width = COLS * BLOCK_SIZE;
         canvas.height = ROWS * BLOCK_SIZE;
         
+        // 修正後（すべて正方形の形に統一）
         const SHAPES = [
             [],
-            [[0, 1, 0], [1, 1, 1]], // T
-            [[1, 1, 1, 1]], // I
-            [[1, 1], [1, 1]], // O
-            [[0, 0, 1], [1, 1, 1]], // L
-            [[1, 0, 0], [1, 1, 1]], // J
-            [[0, 1, 1], [1, 1, 0]], // S
-            [[1, 1, 0], [0, 1, 1]]  // Z
+            [[0, 1, 0], [1, 1, 1], [0, 0, 0]], // T (3x3)
+            [[0, 0, 0, 0], [1, 1, 1, 1], [0, 0, 0, 0], [0, 0, 0, 0]], // I (4x4)
+            [[1, 1], [1, 1]], // O (2x2)
+            [[0, 0, 1], [1, 1, 1], [0, 0, 0]], // L (3x3)
+            [[1, 0, 0], [1, 1, 1], [0, 0, 0]], // J (3x3)
+            [[0, 1, 1], [1, 1, 0], [0, 0, 0]], // S (3x3)
+            [[1, 1, 0], [0, 1, 1], [0, 0, 0]]  // Z (3x3)
         ];
 
         const COLORS = [
-            null, 'purple', 'cyan', 'yellow', 'orange', 'blue', 'green', 'red'
+            null, 'purple', 'cyan', 'yellow', 'orange', 'blue', 'lime', 'red'
         ];
 
         let board = [];
@@ -160,6 +157,9 @@
         let gameLoopSpeed = 1000;
         let pieceBag = [];
 
+        // 【追加】接地している状態を管理するフラグ
+        let isLockDelaying = false;
+
         function init() {
             board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
             score = 0;
@@ -172,6 +172,7 @@
             pieceBag = [];
             holdPiece = null;
             hasHeldThisTurn = false;
+            isLockDelaying = false; // 初期化
             drawHoldPiece();
             isGameOver = false;
             isPaused = false;
@@ -215,6 +216,7 @@
             currentPiece = nextPiece;
             nextPiece = createNewPiece();
             hasHeldThisTurn = false;
+            isLockDelaying = false; // 新しいブロック出現時はフラグをリセット
             if (!isValidMove(currentPiece.x, currentPiece.y, currentPiece.shape)) {
                 gameOver();
             }
@@ -315,6 +317,12 @@
             return true;
         }
 
+        // 【変更】接地チェック関数を追加
+        function isGround() {
+            if (!currentPiece) return false;
+            return !isValidMove(currentPiece.x, currentPiece.y + 1, currentPiece.shape);
+        }
+
         function movePiece(dx, dy) {
             if (isGameOver || isPaused) return;
             const newX = currentPiece.x + dx;
@@ -322,31 +330,58 @@
             if (isValidMove(newX, newY, currentPiece.shape)) {
                 currentPiece.x = newX;
                 currentPiece.y = newY;
+                
+                // 接地中に横移動に成功したら、猶予を与えるためにフラグを一時解除する
+                if (dx !== 0 && isLockDelaying) {
+                    isLockDelaying = false;
+                }
+
                 draw();
                 return true;
             }
             return false;
         }
 
-        function rotatePiece() {
+        function rotatePiece(isClockwise = true) {
             if (isGameOver || isPaused) return;
             const shape = currentPiece.shape;
             const N = shape.length;
             const M = shape[0].length;
+            
+            // 回転後の形状を作成
             const newShape = Array.from({ length: M }, () => Array(N).fill(0));
             for (let y = 0; y < N; y++) {
                 for (let x = 0; x < M; x++) {
-                    newShape[x][N - 1 - y] = shape[y][x];
+                    if (isClockwise) {
+                        // 通常の右回転
+                        newShape[x][N - 1 - y] = shape[y][x];
+                    } else {
+                        // 逆回転（左回転）
+                        newShape[M - 1 - x][y] = shape[y][x];
+                    }
                 }
             }
-            const kicks = [{x:0,y:0}, {x:1,y:0}, {x:-1,y:0}, {x:0,y:-1}, {x:2,y:0}, {x:-2,y:0}];
+            
+            // 壁や床を避けるためのキックパターン
+            const kicks = [
+                {x: 0, y: 0},   {x: -1, y: 0},  {x: 1, y: 0}, 
+                {x: 0, y: -1},  {x: -2, y: 0},  {x: 2, y: 0},
+                {x: -1, y: -1}, {x: 1, y: -1}
+            ];
+            
             for (let k of kicks) {
                 const newX = currentPiece.x + k.x;
                 const newY = currentPiece.y + k.y;
+                
                 if (isValidMove(newX, newY, newShape)) {
                     currentPiece.shape = newShape;
                     currentPiece.x = newX;
                     currentPiece.y = newY;
+                    
+                    if (isLockDelaying) {
+                        isLockDelaying = false;
+                    }
+
                     draw();
                     return;
                 }
@@ -392,9 +427,23 @@
             }
         }
 
+        // 【変更】ゲームループでの接地判定ロジックを修正
         function gameLoop() {
             if (isGameOver || isPaused) return;
-            if (!movePiece(0, 1)) pieceLanded();
+            
+            if (movePiece(0, 1)) {
+                // 下に進めた場合は、まだ空中なので固定猶予フラグを下ろす
+                isLockDelaying = false;
+            } else {
+                // 下に進めなかった（接地した）場合
+                if (isLockDelaying) {
+                    // すでに前回のループでも接地していたなら、ここで初めて固定する
+                    pieceLanded();
+                } else {
+                    // 初めて接地した瞬間なら、フラグを立てて今回のループは固定を見送る（1マス分の時間を猶予）
+                    isLockDelaying = true;
+                }
+            }
         }
 
         function gameOver() {
@@ -403,7 +452,6 @@
             ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = 'white';
-            // JavaScript内のフォント設定も変更
             ctx.font = '20px "Silkscreen"';
             ctx.textAlign = 'center';
             ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2);
@@ -432,6 +480,7 @@
         function holdFunction() {
             if (isGameOver || isPaused || hasHeldThisTurn) return;
             hasHeldThisTurn = true;
+            isLockDelaying = false; // ホールド時もフラグクリア
             if (holdPiece === null) {
                 holdPiece = currentPiece;
                 spawnNewPiece();
@@ -453,11 +502,26 @@
             }
             if (e.key === 'p' || e.key === 'P') { togglePause(); return; }
             if (isGameOver || isPaused) return;
+            
             switch (e.key) {
                 case 'ArrowLeft': movePiece(-1, 0); break;
                 case 'ArrowRight': movePiece(1, 0); break;
-                case 'ArrowDown': movePiece(0, 1); break;
-                case 'ArrowUp': case 'x': case 'X': rotatePiece(); break;
+                case 'ArrowDown': 
+                    if (!movePiece(0, 1)) {
+                        if (isLockDelaying) pieceLanded();
+                        else isLockDelaying = true;
+                    }
+                    break;
+                case 'ArrowUp': 
+                    // Shiftが押されていたら逆回転（false）、そうでなければ通常回転（true）
+                    if (e.shiftKey) {
+                        rotatePiece(false); 
+                    } else {
+                        rotatePiece(true);
+                    }
+                    break;
+                case 'x': case 'X': rotatePiece(true); break; // xキーは通常回転
+                case 'z': case 'Z': rotatePiece(false); break; // せっかくなのでzキーでも逆回転できるように
                 case ' ':
                     e.preventDefault();
                     while (movePiece(0, 1)) {}
