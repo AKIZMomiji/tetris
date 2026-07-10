@@ -870,6 +870,15 @@
             else if (playerState.isPaused) togglePause();
         });
 
+        // ---------- 自動ポーズ機能 ----------
+        window.addEventListener('blur', () => {
+            // すでにゲームオーバー、またはすでにポーズ中、またはまだゲームが始まっていない場合は何もしない
+            if (playerState.isGameOver || playerState.isPaused) return;
+            
+            // プレイ中の場合のみトグルポーズを呼び出して一時停止する
+            togglePause();
+        });
+
         function showStartScreen() {
             [playerState, aiState].forEach(state => {
                 drawBoard(state);
