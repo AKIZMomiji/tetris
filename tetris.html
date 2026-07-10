@@ -12,48 +12,106 @@
         body {
             font-family: "Silkscreen", sans-serif;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            justify-content: flex-start;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             background-color: #f0f0f0;
             margin: 0;
+            padding: 20px 0 40px;
         }
         h1 {
             text-align: center;
             color: #333;
+            margin-bottom: 10px;
+        }
+        .controls-bar {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+            background: #fff;
+            border: 1px solid #ccc;
+            padding: 10px 16px;
+        }
+        .controls-bar label {
+            font-size: 0.85em;
+            color: #333;
+        }
+        select#levelSelect {
+            font-family: "Silkscreen", sans-serif;
+            font-size: 0.9em;
+            padding: 4px 6px;
+        }
+        .mode-toggle {
+            display: flex;
+            gap: 10px;
+        }
+        .mode-toggle label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.85em;
+            cursor: pointer;
+        }
+        .level-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .level-group.hidden {
+            display: none;
+        }
+        .player-block.hidden {
+            display: none;
+        }
+        .arena {
+            display: flex;
+            gap: 40px;
+        }
+        .player-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .player-label {
+            font-size: 1em;
+            color: #333;
+            margin-bottom: 6px;
+            letter-spacing: 1px;
         }
         .game-container {
             display: flex;
             gap: 20px;
         }
-        canvas#gameCanvas {
+        canvas.gameCanvas {
             border: 2px solid #333;
-            background-color: #eee; 
+            background-color: #eee;
         }
         .info-panel {
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            width: 150px;
+            width: 130px;
         }
         .info-box {
             border: 1px solid #ccc;
-            padding: 10px;
+            padding: 8px;
             background: #fff;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             text-align: center;
         }
         .info-box h3 {
             margin-top: 0;
             margin-bottom: 5px;
-            font-size: 0.9em;
+            font-size: 0.8em;
         }
-        #score, #level, #lines {
-            font-size: 1.2em;
+        .scoreEl, .levelEl, .linesEl {
+            font-size: 1.1em;
             font-weight: bold;
             color: #d9534f;
         }
-        #nextCanvas, #holdCanvas {
+        .nextCanvas, .holdCanvas {
             border: 1px solid #ccc;
             background-color: #f9f9f9;
         }
@@ -70,64 +128,75 @@
         button#startButton:hover {
             background-color: #45a049;
         }
+        button#startButton:disabled {
+            background-color: #999;
+            cursor: default;
+        }
     </style>
 </head>
 <body>
 
-    <div>
-        <h1>LEAK.GG</h1>
-        <div class="game-container">
-            <canvas id="gameCanvas"></canvas>
-            
-            <div class="info-panel">
-                <div class="info-box">
-                    <h3>SCORE</h3>
-                    <div id="score">0</div>
-                </div>
-                <div class="info-box">
-                    <h3>LEVEL</h3>
-                    <div id="level">1</div>
-                </div>
-                <div class="info-box">
-                    <h3>LINES</h3>
-                    <div id="lines">0</div>
-                </div>
+    <h1>LEAK.GG</h1>
 
-                <div class="info-box">
-                    <h3>HOLD (C)</h3>
-                    <canvas id="holdCanvas" width="120" height="120"></canvas>
+    <div class="controls-bar">
+        <div class="mode-toggle">
+            <label><input type="radio" name="mode" value="solo" id="modeSolo" checked> Solo</label>
+            <label><input type="radio" name="mode" value="bot" id="modeBot"> BOT</label>
+        </div>
+        <div class="level-group hidden" id="levelGroup">
+            <label for="levelSelect">BOT LEVEL</label>
+            <select id="levelSelect">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5" selected>5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+            </select>
+        </div>
+        <button id="startButton">START</button>
+    </div>
+
+    <div class="arena">
+        <div class="player-block">
+            <div class="player-label">YOU</div>
+            <div class="game-container">
+                <canvas class="gameCanvas" id="gameCanvasP"></canvas>
+                <div class="info-panel">
+                    <div class="info-box"><h3>SCORE</h3><div class="scoreEl" id="scoreP">0</div></div>
+                    <div class="info-box"><h3>LEVEL</h3><div class="levelEl" id="levelP">1</div></div>
+                    <div class="info-box"><h3>LINES</h3><div class="linesEl" id="linesP">0</div></div>
+                    <div class="info-box"><h3>HOLD (C)</h3><canvas class="holdCanvas" id="holdCanvasP" width="100" height="100"></canvas></div>
+                    <div class="info-box"><h3>NEXT</h3><canvas class="nextCanvas" id="nextCanvasP" width="100" height="100"></canvas></div>
                 </div>
-                <div class="info-box">
-                    <h3>NEXT</h3>
-                    <canvas id="nextCanvas" width="120" height="120"></canvas>
+            </div>
+        </div>
+
+        <div class="player-block" id="botBlock">
+            <div class="player-label" id="botLabel">BOT (LV.5)</div>
+            <div class="game-container">
+                <canvas class="gameCanvas" id="gameCanvasA"></canvas>
+                <div class="info-panel">
+                    <div class="info-box"><h3>SCORE</h3><div class="scoreEl" id="scoreA">0</div></div>
+                    <div class="info-box"><h3>LEVEL</h3><div class="levelEl" id="levelA">1</div></div>
+                    <div class="info-box"><h3>LINES</h3><div class="linesEl" id="linesA">0</div></div>
+                    <div class="info-box"><h3>HOLD</h3><canvas class="holdCanvas" id="holdCanvasA" width="100" height="100"></canvas></div>
+                    <div class="info-box"><h3>NEXT</h3><canvas class="nextCanvas" id="nextCanvasA" width="100" height="100"></canvas></div>
                 </div>
-                <button id="startButton">START</button>
             </div>
         </div>
     </div>
 
     <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const nextCanvas = document.getElementById('nextCanvas');
-        const nextCtx = nextCanvas.getContext('2d');
-        const holdCanvas = document.getElementById('holdCanvas');
-        const holdCtx = holdCanvas.getContext('2d');
-
-        const scoreEl = document.getElementById('score');
-        const levelEl = document.getElementById('level');
-        const linesEl = document.getElementById('lines');
-        const startButton = document.getElementById('startButton');
-
         const ROWS = 20;
         const COLS = 10;
         const BLOCK_SIZE = 30;
-        const NEXT_BLOCK_SIZE = 20;
+        const NEXT_BLOCK_SIZE = 18;
 
-        canvas.width = COLS * BLOCK_SIZE;
-        canvas.height = ROWS * BLOCK_SIZE;
-        
-        // 修正後（すべて正方形の形に統一）
         const SHAPES = [
             [],
             [[0, 1, 0], [1, 1, 1], [0, 0, 0]], // T (3x3)
@@ -140,69 +209,135 @@
         ];
 
         const COLORS = [
-            null, 'purple', 'cyan', 'yellow', 'orange', 'blue', 'lime', 'red'
+            null, 'purple', 'cyan', 'yellow', 'orange', 'blue', 'lime', 'red', '#555'
         ];
+        const GARBAGE_COLOR_INDEX = 8;
+        const GARBAGE_TABLE = { 2: 1, 3: 2, 4: 4 };
 
-        let board = [];
-        let currentPiece;
-        let nextPiece;
-        let holdPiece = null;
-        let hasHeldThisTurn = false;
-        let score = 0;
-        let level = 1;
-        let lines = 0;
-        let dropInterval;
-        let isGameOver = true;
-        let isPaused = false;
-        let gameLoopSpeed = 1000;
-        let pieceBag = [];
+        const startButton = document.getElementById('startButton');
+        const levelSelect = document.getElementById('levelSelect');
+        const levelGroup = document.getElementById('levelGroup');
+        const botLabel = document.getElementById('botLabel');
+        const botBlock = document.getElementById('botBlock');
+        const modeSolo = document.getElementById('modeSolo');
+        const modeBot = document.getElementById('modeBot');
 
-        // 【追加】接地している状態を管理するフラグ
-        let isLockDelaying = false;
+        // ★ 全体共有のピースバッグシステム（ネクストを同一にするため）
+        let globalPieceBag = [];
+        let globalPointer = 0;
 
-        function init() {
-            board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
-            score = 0;
-            level = 1;
-            lines = 0;
-            gameLoopSpeed = 1000;
-            scoreEl.textContent = score;
-            levelEl.textContent = level;
-            linesEl.textContent = lines;
-            pieceBag = [];
-            holdPiece = null;
-            hasHeldThisTurn = false;
-            isLockDelaying = false; // 初期化
-            drawHoldPiece();
-            isGameOver = false;
-            isPaused = false;
-            nextPiece = createNewPiece();
-            spawnNewPiece();
-            startGameLoop();
-            startButton.textContent = "START";
-        }
-
-        function startGameLoop() {
-            if (dropInterval) clearInterval(dropInterval);
-            dropInterval = setInterval(gameLoop, gameLoopSpeed / level);
-        }
-
-        function fillPieceBag() {
+        function fillGlobalPieceBag() {
             const pieces = [1, 2, 3, 4, 5, 6, 7];
             for (let i = pieces.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [pieces[i], pieces[j]] = [pieces[j], pieces[i]];
             }
-            pieceBag = pieces;
+            globalPieceBag = globalPieceBag.concat(pieces);
         }
 
-        function getNextPieceIndex() {
-            if (pieceBag.length === 0) fillPieceBag();
-            return pieceBag.pop();
+        function getGlobalPieceIndex(index) {
+            while (index >= globalPieceBag.length) {
+                fillGlobalPieceBag();
+            }
+            return globalPieceBag[index];
         }
 
-        function createNewPiece() {
-            const rand = getNextPieceIndex();
+        function currentMode() {
+            return modeBot.checked ? 'bot' : 'solo';
+        }
+
+        function applyModeVisibility() {
+            const mode = currentMode();
+            levelGroup.classList.toggle('hidden', mode !== 'bot');
+            botBlock.classList.toggle('hidden', mode !== 'bot');
+        }
+        modeSolo.addEventListener('change', applyModeVisibility);
+        modeBot.addEventListener('change', applyModeVisibility);
+        applyModeVisibility();
+
+        // ---------- 状態生成 ----------
+        function makeState(isAI, suffix) {
+            const canvas = document.getElementById('gameCanvas' + suffix);
+            const ctx = canvas.getContext('2d');
+            canvas.width = COLS * BLOCK_SIZE;
+            canvas.height = ROWS * BLOCK_SIZE;
+            const nextCanvas = document.getElementById('nextCanvas' + suffix);
+            const holdCanvas = document.getElementById('holdCanvas' + suffix);
+            return {
+                isAI,
+                canvas, ctx,
+                nextCanvas, nextCtx: nextCanvas.getContext('2d'),
+                holdCanvas, holdCtx: holdCanvas.getContext('2d'),
+                scoreEl: document.getElementById('score' + suffix),
+                levelEl: document.getElementById('level' + suffix),
+                linesEl: document.getElementById('lines' + suffix),
+                board: [],
+                currentPiece: null,
+                nextPiece: null,
+                holdPiece: null,
+                hasHeldThisTurn: false,
+                score: 0,
+                level: 1,
+                lines: 0,
+                dropInterval: null,
+                aiInterval: null,
+                aiPlan: null,
+                isGameOver: true,
+                isPaused: false,
+                gameLoopSpeed: 1000,
+                pieceIndexPointer: 0, // それぞれ何番目のミノを引いているかのポインタ
+                isLockDelaying: false,
+                opponent: null
+            };
+        }
+
+        const playerState = makeState(false, 'P');
+        const aiState = makeState(true, 'A');
+        playerState.opponent = aiState;
+        aiState.opponent = playerState;
+        let activeMode = 'solo';
+
+        // ---------- 初期化 ----------
+        function init(state, startLevel) {
+            state.board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+            state.score = 0;
+            state.level = startLevel;
+            state.lines = 0;
+            state.gameLoopSpeed = 1000;
+            state.scoreEl.textContent = state.score;
+            state.levelEl.textContent = state.level;
+            state.linesEl.textContent = state.lines;
+            state.pieceIndexPointer = 0; // ポインタ初期化
+            state.holdPiece = null;
+            state.hasHeldThisTurn = false;
+            state.isLockDelaying = false;
+            state.aiPlan = null;
+            drawHoldPiece(state);
+            state.isGameOver = false;
+            state.isPaused = false;
+            state.nextPiece = createNewPiece(state);
+            spawnNewPiece(state);
+            startGameLoop(state);
+        }
+
+        function startGameLoop(state) {
+            if (state.dropInterval) clearInterval(state.dropInterval);
+            if (state.aiInterval) clearInterval(state.aiInterval);
+            if (state.isAI) {
+                state.aiInterval = setInterval(() => aiTick(state), aiTickSpeed(state.level));
+            } else {
+                state.dropInterval = setInterval(() => gameLoop(state), state.gameLoopSpeed / state.level);
+            }
+        }
+
+        function aiTickSpeed(level) {
+            return Math.round(400 - (level - 1) * 38);
+        }
+
+        // ---------- ピース生成 ----------
+        function createNewPiece(state) {
+            const rand = getGlobalPieceIndex(state.pieceIndexPointer);
+            state.pieceIndexPointer++;
             const shape = SHAPES[rand];
             return {
                 shape: shape,
@@ -212,17 +347,19 @@
             };
         }
 
-        function spawnNewPiece() {
-            currentPiece = nextPiece;
-            nextPiece = createNewPiece();
-            hasHeldThisTurn = false;
-            isLockDelaying = false; // 新しいブロック出現時はフラグをリセット
-            if (!isValidMove(currentPiece.x, currentPiece.y, currentPiece.shape)) {
-                gameOver();
+        function spawnNewPiece(state) {
+            state.currentPiece = state.nextPiece;
+            state.nextPiece = createNewPiece(state);
+            state.hasHeldThisTurn = false;
+            state.isLockDelaying = false;
+            state.aiPlan = null;
+            if (!isValidMove(state.board, state.currentPiece.x, state.currentPiece.y, state.currentPiece.shape)) {
+                gameOver(state);
             }
-            drawNextPiece();
+            drawNextPiece(state);
         }
 
+        // ---------- 描画 ----------
         function drawBlock(ctx, x, y, colorIndex, blockSize) {
             ctx.fillStyle = COLORS[colorIndex];
             ctx.fillRect(x * blockSize, y * blockSize, blockSize, blockSize);
@@ -231,46 +368,44 @@
             ctx.strokeRect(x * blockSize, y * blockSize, blockSize, blockSize);
         }
 
-        function drawBoard() {
-            ctx.fillStyle = '#eee';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        function drawBoard(state) {
+            state.ctx.fillStyle = '#eee';
+            state.ctx.fillRect(0, 0, state.canvas.width, state.canvas.height);
             for (let y = 0; y < ROWS; y++) {
                 for (let x = 0; x < COLS; x++) {
-                    if (board[y][x] > 0) {
-                        drawBlock(ctx, x, y, board[y][x], BLOCK_SIZE);
+                    if (state.board[y][x] > 0) {
+                        drawBlock(state.ctx, x, y, state.board[y][x], BLOCK_SIZE);
                     }
                 }
             }
         }
 
-        function drawCurrentPiece() {
-            if (isGameOver || !currentPiece) return;
-            const { x, y, shape, colorIndex } = currentPiece;
+        function drawCurrentPiece(state) {
+            if (state.isGameOver || !state.currentPiece) return;
+            const { x, y, shape, colorIndex } = state.currentPiece;
             shape.forEach((row, rowY) => {
                 row.forEach((value, colX) => {
                     if (value > 0) {
-                        drawBlock(ctx, x + colX, y + rowY, colorIndex, BLOCK_SIZE);
+                        drawBlock(state.ctx, x + colX, y + rowY, colorIndex, BLOCK_SIZE);
                     }
                 });
             });
         }
 
-        function drawGhostPiece() {
-            if (isGameOver || isPaused || !currentPiece) return;
-            let ghostY = currentPiece.y;
-            while (isValidMove(currentPiece.x, ghostY + 1, currentPiece.shape)) {
+        function drawGhostPiece(state) {
+            if (state.isGameOver || state.isPaused || !state.currentPiece) return;
+            let ghostY = state.currentPiece.y;
+            while (isValidMove(state.board, state.currentPiece.x, ghostY + 1, state.currentPiece.shape)) {
                 ghostY++;
             }
-            const { x, shape } = currentPiece;
-            ctx.fillStyle = 'rgba(100, 100, 100, 0.3)';
-            ctx.strokeStyle = 'rgba(100, 100, 100, 0.8)';
-            ctx.lineWidth = 1;
+            const { x, shape } = state.currentPiece;
+            state.ctx.fillStyle = 'rgba(100, 100, 100, 0.3)';
             shape.forEach((row, rowY) => {
                 row.forEach((value, colX) => {
                     if (value > 0) {
                         const drawX = (x + colX) * BLOCK_SIZE;
                         const drawY = (ghostY + rowY) * BLOCK_SIZE;
-                        ctx.fillRect(drawX, drawY, BLOCK_SIZE, BLOCK_SIZE);
+                        state.ctx.fillRect(drawX, drawY, BLOCK_SIZE, BLOCK_SIZE);
                     }
                 });
             });
@@ -293,17 +428,18 @@
             });
         }
 
-        function drawNextPiece() { drawSidePanelPiece(nextCtx, nextPiece); }
-        function drawHoldPiece() { drawSidePanelPiece(holdCtx, holdPiece); }
+        function drawNextPiece(state) { drawSidePanelPiece(state.nextCtx, state.nextPiece); }
+        function drawHoldPiece(state) { drawSidePanelPiece(state.holdCtx, state.holdPiece); }
 
-        function draw() {
-            if (isGameOver || isPaused) return;
-            drawBoard();
-            drawGhostPiece();
-            drawCurrentPiece();
+        function draw(state) {
+            if (state.isGameOver || state.isPaused) return;
+            drawBoard(state);
+            drawGhostPiece(state);
+            drawCurrentPiece(state);
         }
 
-        function isValidMove(xPos, yPos, shape) {
+        // ---------- 判定 ----------
+        function isValidMove(board, xPos, yPos, shape) {
             for (let y = 0; y < shape.length; y++) {
                 for (let x = 0; x < shape[y].length; x++) {
                     if (shape[y][x] > 0) {
@@ -317,238 +453,439 @@
             return true;
         }
 
-        // 【変更】接地チェック関数を追加
-        function isGround() {
-            if (!currentPiece) return false;
-            return !isValidMove(currentPiece.x, currentPiece.y + 1, currentPiece.shape);
-        }
-
-        function movePiece(dx, dy) {
-            if (isGameOver || isPaused) return;
-            const newX = currentPiece.x + dx;
-            const newY = currentPiece.y + dy;
-            if (isValidMove(newX, newY, currentPiece.shape)) {
-                currentPiece.x = newX;
-                currentPiece.y = newY;
-                
-                // 接地中に横移動に成功したら、猶予を与えるためにフラグを一時解除する
-                if (dx !== 0 && isLockDelaying) {
-                    isLockDelaying = false;
+        function movePiece(state, dx, dy) {
+            if (state.isGameOver || state.isPaused) return false;
+            const newX = state.currentPiece.x + dx;
+            const newY = state.currentPiece.y + dy;
+            if (isValidMove(state.board, newX, newY, state.currentPiece.shape)) {
+                state.currentPiece.x = newX;
+                state.currentPiece.y = newY;
+                if (dx !== 0 && state.isLockDelaying) {
+                    state.isLockDelaying = false;
                 }
-
-                draw();
+                draw(state);
                 return true;
             }
             return false;
         }
 
-        function rotatePiece(isClockwise = true) {
-            if (isGameOver || isPaused) return;
-            const shape = currentPiece.shape;
+        function getRotatedShape(shape, isClockwise) {
             const N = shape.length;
             const M = shape[0].length;
-            
-            // 回転後の形状を作成
             const newShape = Array.from({ length: M }, () => Array(N).fill(0));
             for (let y = 0; y < N; y++) {
                 for (let x = 0; x < M; x++) {
                     if (isClockwise) {
-                        // 通常の右回転
                         newShape[x][N - 1 - y] = shape[y][x];
                     } else {
-                        // 逆回転（左回転）
                         newShape[M - 1 - x][y] = shape[y][x];
                     }
                 }
             }
-            
-            // 壁や床を避けるためのキックパターン
+            return newShape;
+        }
+
+        function rotatePiece(state, isClockwise = true) {
+            if (state.isGameOver || state.isPaused) return;
+            const newShape = getRotatedShape(state.currentPiece.shape, isClockwise);
             const kicks = [
-                {x: 0, y: 0},   {x: -1, y: 0},  {x: 1, y: 0}, 
+                {x: 0, y: 0},   {x: -1, y: 0},  {x: 1, y: 0},
                 {x: 0, y: -1},  {x: -2, y: 0},  {x: 2, y: 0},
                 {x: -1, y: -1}, {x: 1, y: -1}
             ];
-            
             for (let k of kicks) {
-                const newX = currentPiece.x + k.x;
-                const newY = currentPiece.y + k.y;
-                
-                if (isValidMove(newX, newY, newShape)) {
-                    currentPiece.shape = newShape;
-                    currentPiece.x = newX;
-                    currentPiece.y = newY;
-                    
-                    if (isLockDelaying) {
-                        isLockDelaying = false;
-                    }
-
-                    draw();
+                const newX = state.currentPiece.x + k.x;
+                const newY = state.currentPiece.y + k.y;
+                if (isValidMove(state.board, newX, newY, newShape)) {
+                    state.currentPiece.shape = newShape;
+                    state.currentPiece.x = newX;
+                    state.currentPiece.y = newY;
+                    if (state.isLockDelaying) state.isLockDelaying = false;
+                    draw(state);
                     return;
                 }
             }
         }
 
-        function pieceLanded() {
-            currentPiece.shape.forEach((row, rowY) => {
+        function pieceLanded(state) {
+            state.currentPiece.shape.forEach((row, rowY) => {
                 row.forEach((value, colX) => {
                     if (value > 0) {
-                        const boardX = currentPiece.x + colX;
-                        const boardY = currentPiece.y + rowY;
-                        if (boardY >= 0) board[boardY][boardX] = currentPiece.colorIndex;
+                        const boardX = state.currentPiece.x + colX;
+                        const boardY = state.currentPiece.y + rowY;
+                        if (boardY >= 0) state.board[boardY][boardX] = state.currentPiece.colorIndex;
                     }
                 });
             });
-            clearLines();
-            spawnNewPiece();
-            draw();
+            clearLines(state);
+            spawnNewPiece(state);
+            draw(state);
         }
 
-        function clearLines() {
+        // ---------- お邪魔ブロック ----------
+        function addGarbage(state, count) {
+            if (!count || count <= 0 || state.isGameOver) return;
+            let overflow = false;
+            for (let i = 0; i < count; i++) {
+                if (state.board[0].some(cell => cell > 0)) overflow = true;
+                state.board.shift();
+                const holeCol = Math.floor(Math.random() * COLS);
+                const row = Array(COLS).fill(GARBAGE_COLOR_INDEX);
+                row[holeCol] = 0;
+                state.board.push(row);
+            }
+            if (state.currentPiece) {
+                state.currentPiece.y -= count;
+            }
+            if (overflow || (state.currentPiece && !isValidMove(state.board, state.currentPiece.x, state.currentPiece.y, state.currentPiece.shape))) {
+                gameOver(state);
+                return;
+            }
+            draw(state);
+        }
+
+        function clearLines(state) {
             let linesCleared = 0;
             for (let y = ROWS - 1; y >= 0; y--) {
-                if (board[y].every(cell => cell > 0)) {
+                if (state.board[y].every(cell => cell > 0)) {
                     linesCleared++;
-                    board.splice(y, 1);
-                    board.unshift(Array(COLS).fill(0));
+                    state.board.splice(y, 1);
+                    state.board.unshift(Array(COLS).fill(0));
                     y++;
                 }
             }
             if (linesCleared > 0) {
-                score += [0, 100, 300, 500, 800][linesCleared] * level;
-                lines += linesCleared;
-                const newLevel = Math.floor(lines / 10) + 1;
-                if (newLevel > level) {
-                    level = newLevel;
-                    startGameLoop();
+                state.score += [0, 100, 300, 500, 800][linesCleared] * state.level;
+                state.lines += linesCleared;
+                if (!state.isAI) {
+                    const newLevel = Math.floor(state.lines / 10) + 1;
+                    if (newLevel > state.level) {
+                        state.level = newLevel;
+                        startGameLoop(state);
+                    }
                 }
-                scoreEl.textContent = score;
-                levelEl.textContent = level;
-                linesEl.textContent = lines;
+                state.scoreEl.textContent = state.score;
+                state.levelEl.textContent = state.level;
+                state.linesEl.textContent = state.lines;
+
+                if (activeMode === 'bot' && state.opponent && !state.opponent.isGameOver) {
+                    const garbageLines = GARBAGE_TABLE[linesCleared] || 0;
+                    if (garbageLines > 0) addGarbage(state.opponent, garbageLines);
+                }
             }
         }
 
-        // 【変更】ゲームループでの接地判定ロジックを修正
-        function gameLoop() {
-            if (isGameOver || isPaused) return;
-            
-            if (movePiece(0, 1)) {
-                // 下に進めた場合は、まだ空中なので固定猶予フラグを下ろす
-                isLockDelaying = false;
+        function gameLoop(state) {
+            if (state.isGameOver || state.isPaused) return;
+            if (movePiece(state, 0, 1)) {
+                state.isLockDelaying = false;
             } else {
-                // 下に進めなかった（接地した）場合
-                if (isLockDelaying) {
-                    // すでに前回のループでも接地していたなら、ここで初めて固定する
-                    pieceLanded();
+                if (state.isLockDelaying) {
+                    pieceLanded(state);
                 } else {
-                    // 初めて接地した瞬間なら、フラグを立てて今回のループは固定を見送る（1マス分の時間を猶予）
-                    isLockDelaying = true;
+                    state.isLockDelaying = true;
                 }
             }
         }
 
-        function gameOver() {
-            isGameOver = true;
-            clearInterval(dropInterval);
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = 'white';
-            ctx.font = '20px "Silkscreen"';
-            ctx.textAlign = 'center';
-            ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2);
+        // ---------- BOT AI ----------
+        function isValidMoveGeneric(board, xPos, yPos, shape) {
+            return isValidMove(board, xPos, yPos, shape);
+        }
+
+        function cloneBoardAndPlace(board, x, y, shape, colorIndex) {
+            const sim = board.map(row => row.slice());
+            shape.forEach((row, rowY) => {
+                row.forEach((value, colX) => {
+                    if (value > 0) {
+                        const bx = x + colX;
+                        const by = y + rowY;
+                        if (by >= 0 && by < ROWS && bx >= 0 && bx < COLS) sim[by][bx] = colorIndex;
+                    }
+                });
+            });
+            return sim;
+        }
+
+        function evaluateBoard(simBoard) {
+            const heights = [];
+            for (let c = 0; c < COLS; c++) {
+                let h = 0;
+                for (let r = 0; r < ROWS; r++) {
+                    if (simBoard[r][c] > 0) { h = ROWS - r; break; }
+                }
+                heights.push(h);
+            }
+            const aggHeight = heights.reduce((a, b) => a + b, 0);
+            let holes = 0;
+            for (let c = 0; c < COLS; c++) {
+                let blockFound = false;
+                for (let r = 0; r < ROWS; r++) {
+                    if (simBoard[r][c] > 0) blockFound = true;
+                    else if (blockFound) holes++;
+                }
+            }
+            let bumpiness = 0;
+            for (let c = 0; c < COLS - 1; c++) bumpiness += Math.abs(heights[c] - heights[c + 1]);
+            let linesCleared = 0;
+            for (let r = 0; r < ROWS; r++) {
+                if (simBoard[r].every(v => v > 0)) linesCleared++;
+            }
+            return -0.51 * aggHeight + 0.76 * linesCleared - 0.36 * holes - 0.18 * bumpiness;
+        }
+
+        function rotationCountForShape(pieceIndex) {
+            if (pieceIndex === 3) return 1; // O
+            if (pieceIndex === 2 || pieceIndex === 6 || pieceIndex === 7) return 2; // I, S, Z
+            return 4; // T, L, J
+        }
+
+        // ある特定のミノ単体の、ベストな配置点とスコアを返す関数
+        function getBestMoveForPiece(board, pieceIndex) {
+            const shapeOriginal = SHAPES[pieceIndex];
+            const rotations = rotationCountForShape(pieceIndex);
+            let bestScore = -Infinity;
+            let bestMove = null;
+
+            let shape = shapeOriginal;
+            for (let r = 0; r < rotations; r++) {
+                for (let x = -3; x <= COLS + 3; x++) {
+                    let y = 0;
+                    if (!isValidMoveGeneric(board, x, y, shape)) continue;
+                    while (isValidMoveGeneric(board, x, y + 1, shape)) y++;
+                    const sim = cloneBoardAndPlace(board, x, y, shape, pieceIndex);
+                    const sc = evaluateBoard(sim);
+                    if (sc > bestScore) {
+                        bestScore = sc;
+                        bestMove = { shape: shape, x, y, score: sc };
+                    }
+                }
+                shape = getRotatedShape(shape, true);
+            }
+            return bestMove;
+        }
+
+        // ★ ホールドの評価も含めて意思決定を行うよう変更
+        function aiDecideMove(state) {
+            if (state.hasHeldThisTurn) {
+                // すでにそのターンでホールド済みの場合は現在のミノで決定
+                return getBestMoveForPiece(state.board, state.currentPiece.colorIndex);
+            }
+
+            // 1. 今のミノをそのまま使った場合のベスト
+            const currentBest = getBestMoveForPiece(state.board, state.currentPiece.colorIndex);
+
+            // 2. ホールドした場合に対象となるミノ
+            // まだホールドが空ならネクストのミノ、すでにあればホールド内のミノ
+            const targetHoldIndex = (state.holdPiece === null) ? state.nextPiece.colorIndex : state.holdPiece.colorIndex;
+            const holdBest = getBestMoveForPiece(state.board, targetHoldIndex);
+
+            // どちらも置けない場合はゲームオーバー候補
+            if (!currentBest && !holdBest) return null;
+            if (!currentBest) return { ...holdBest, action: 'hold' };
+            if (!holdBest) return { ...currentBest, action: 'current' };
+
+            // スコアを比較（ホールドした方が評価が高ければホールドを実行フラグを付与）
+            if (holdBest.score > currentBest.score) {
+                return { ...holdBest, action: 'hold' };
+            } else {
+                return { ...currentBest, action: 'current' };
+            }
+        }
+
+        function aiTick(state) {
+            if (state.isGameOver || state.isPaused || !state.currentPiece) return;
+            if (!state.aiPlan) {
+                const plan = aiDecideMove(state);
+                if (!plan) {
+                    gameOver(state);
+                    return;
+                }
+
+                // ★ ホールドアクションが選ばれた場合、ホールド関数を呼んで仕切り直し
+                if (plan.action === 'hold') {
+                    holdFunction(state);
+                    return; 
+                }
+
+                state.aiPlan = plan;
+                state.currentPiece.shape = state.aiPlan.shape;
+                if (!isValidMove(state.board, state.currentPiece.x, state.currentPiece.y, state.currentPiece.shape)) {
+                    state.currentPiece.x = Math.max(0, Math.min(COLS - state.currentPiece.shape[0].length, state.currentPiece.x));
+                }
+                draw(state);
+                return;
+            }
+            if (state.currentPiece.x < state.aiPlan.x) {
+                if (!movePiece(state, 1, 0)) {
+                    while (movePiece(state, 0, 1)) {}
+                    pieceLanded(state);
+                    state.aiPlan = null;
+                }
+            } else if (state.currentPiece.x > state.aiPlan.x) {
+                if (!movePiece(state, -1, 0)) {
+                    while (movePiece(state, 0, 1)) {}
+                    pieceLanded(state);
+                    state.aiPlan = null;
+                }
+            } else {
+                while (movePiece(state, 0, 1)) {}
+                pieceLanded(state);
+                state.aiPlan = null;
+            }
+        }
+
+        // ---------- ゲーム終了 ----------
+        function drawOverlay(state, text, color) {
+            state.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            state.ctx.fillRect(0, 0, state.canvas.width, state.canvas.height);
+            state.ctx.fillStyle = color || 'white';
+            state.ctx.font = '24px "Silkscreen"';
+            state.ctx.textAlign = 'center';
+            state.ctx.fillText(text, state.canvas.width / 2, state.canvas.height / 2);
+        }
+
+        function stopState(state) {
+            if (state.dropInterval) clearInterval(state.dropInterval);
+            if (state.aiInterval) clearInterval(state.aiInterval);
+        }
+
+        function gameOver(state) {
+            if (state.isGameOver) return;
+            state.isGameOver = true;
+            stopState(state);
+            const opp = state.opponent;
+            if (activeMode === 'bot' && opp && !opp.isGameOver) {
+                opp.isGameOver = true;
+                stopState(opp);
+                drawOverlay(state, 'LOSE', '#ff6b6b');
+                drawOverlay(opp, 'WIN', '#5cd65c');
+            } else {
+                drawOverlay(state, 'GAME OVER');
+            }
+            startButton.disabled = false;
             startButton.textContent = "RESTART";
+            levelSelect.disabled = false;
+            modeSolo.disabled = false;
+            modeBot.disabled = false;
         }
 
         function togglePause() {
-            if (isGameOver) return;
-            isPaused = !isPaused;
-            if (isPaused) {
-                clearInterval(dropInterval);
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = 'white';
-                ctx.font = '20px "Silkscreen"';
-                ctx.textAlign = 'center';
-                ctx.fillText('PAUSED', canvas.width / 2, canvas.height / 2);
-                startButton.textContent = "RESUME";
-            } else {
-                startGameLoop();
-                draw();
-                startButton.textContent = "START";
-            }
+            if (playerState.isGameOver) return;
+            const states = activeMode === 'bot' ? [playerState, aiState] : [playerState];
+            const pausing = !playerState.isPaused;
+            states.forEach(state => {
+                state.isPaused = pausing;
+                if (pausing) {
+                    stopState(state);
+                    drawOverlay(state, 'PAUSED');
+                } else {
+                    startGameLoop(state);
+                    draw(state);
+                }
+            });
+            startButton.textContent = pausing ? "RESUME" : "START";
         }
 
-        function holdFunction() {
-            if (isGameOver || isPaused || hasHeldThisTurn) return;
-            hasHeldThisTurn = true;
-            isLockDelaying = false; // ホールド時もフラグクリア
-            if (holdPiece === null) {
-                holdPiece = currentPiece;
-                spawnNewPiece();
+        // ---------- ホールド ----------
+        function holdFunction(state) {
+            if (state.isGameOver || state.isPaused || state.hasHeldThisTurn) return;
+            state.hasHeldThisTurn = true;
+            state.isLockDelaying = false;
+            if (state.holdPiece === null) {
+                state.holdPiece = state.currentPiece;
+                spawnNewPiece(state);
             } else {
-                [currentPiece, holdPiece] = [holdPiece, currentPiece];
-                currentPiece.x = Math.floor(COLS / 2) - Math.floor(currentPiece.shape[0].length / 2);
-                currentPiece.y = 0;
-                if (!isValidMove(currentPiece.x, currentPiece.y, currentPiece.shape)) gameOver();
+                [state.currentPiece, state.holdPiece] = [state.holdPiece, state.currentPiece];
+                state.currentPiece.x = Math.floor(COLS / 2) - Math.floor(state.currentPiece.shape[0].length / 2);
+                state.currentPiece.y = 0;
+                if (!isValidMove(state.board, state.currentPiece.x, state.currentPiece.y, state.currentPiece.shape)) gameOver(state);
             }
-            drawHoldPiece();
-            draw();
+            drawHoldPiece(state);
+            draw(state);
+        }
+
+        // ---------- 開始・入力 ----------
+        function startMatch() {
+            activeMode = currentMode();
+            applyModeVisibility();
+            modeSolo.disabled = true;
+            modeBot.disabled = true;
+
+            // マッチ毎にグローバルバッグをクリアして新規作成
+            globalPieceBag = [];
+            fillGlobalPieceBag();
+
+            init(playerState, 1);
+            if (activeMode === 'bot') {
+                const level = parseInt(levelSelect.value, 10);
+                botLabel.textContent = 'BOT (LV.' + level + ')';
+                init(aiState, level);
+                levelSelect.disabled = true;
+            } else {
+                aiState.isGameOver = true;
+                stopState(aiState);
+            }
+            startButton.textContent = "START";
         }
 
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
-                if (isGameOver) init(); else if (isPaused) togglePause();
+                if (playerState.isGameOver) startMatch();
+                else if (playerState.isPaused) togglePause();
                 e.preventDefault();
-                return; 
+                return;
             }
             if (e.key === 'p' || e.key === 'P') { togglePause(); return; }
-            if (isGameOver || isPaused) return;
-            
+            if (['ArrowLeft', 'ArrowRight', 'ArrowDown', 'ArrowUp', ' '].includes(e.key)) {
+                e.preventDefault();
+            }
+            if (playerState.isGameOver || playerState.isPaused) return;
+
             switch (e.key) {
-                case 'ArrowLeft': movePiece(-1, 0); break;
-                case 'ArrowRight': movePiece(1, 0); break;
-                case 'ArrowDown': 
-                    if (!movePiece(0, 1)) {
-                        if (isLockDelaying) pieceLanded();
-                        else isLockDelaying = true;
+                case 'ArrowLeft': movePiece(playerState, -1, 0); break;
+                case 'ArrowRight': movePiece(playerState, 1, 0); break;
+                case 'ArrowDown':
+                    if (!movePiece(playerState, 0, 1)) {
+                        if (playerState.isLockDelaying) pieceLanded(playerState);
+                        else playerState.isLockDelaying = true;
                     }
                     break;
-                case 'ArrowUp': 
-                    // Shiftが押されていたら逆回転（false）、そうでなければ通常回転（true）
-                    if (e.shiftKey) {
-                        rotatePiece(false); 
-                    } else {
-                        rotatePiece(true);
-                    }
+                case 'ArrowUp':
+                    if (e.shiftKey) rotatePiece(playerState, false);
+                    else rotatePiece(playerState, true);
                     break;
-                case 'x': case 'X': rotatePiece(true); break; // xキーは通常回転
-                case 'z': case 'Z': rotatePiece(false); break; // せっかくなのでzキーでも逆回転できるように
+                case 'x': case 'X': rotatePiece(playerState, true); break;
+                case 'z': case 'Z': rotatePiece(playerState, false); break;
                 case ' ':
-                    e.preventDefault();
-                    while (movePiece(0, 1)) {}
-                    pieceLanded();
+                    while (movePiece(playerState, 0, 1)) {}
+                    pieceLanded(playerState);
                     break;
-                case 'c': case 'C': holdFunction(); break;
+                case 'c': case 'C': holdFunction(playerState); break;
             }
         });
 
         startButton.addEventListener('click', () => {
-            if (isGameOver) init(); else if (isPaused) togglePause();
+            if (playerState.isGameOver) startMatch();
+            else if (playerState.isPaused) togglePause();
         });
-        
+
         function showStartScreen() {
-            drawBoard();
-            holdCtx.fillStyle = '#f9f9f9';
-            holdCtx.fillRect(0, 0, holdCanvas.width, holdCanvas.height);
-            nextCtx.fillStyle = '#f9f9f9';
-            nextCtx.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = 'white';
-            ctx.font = '16px "Silkscreen"';
-            ctx.textAlign = 'center';
-            ctx.fillText('PRESS START OR ENTER', canvas.width / 2, canvas.height / 2);
+            [playerState, aiState].forEach(state => {
+                drawBoard(state);
+                state.holdCtx.fillStyle = '#f9f9f9';
+                state.holdCtx.fillRect(0, 0, state.holdCanvas.width, state.holdCanvas.height);
+                state.nextCtx.fillStyle = '#f9f9f9';
+                state.nextCtx.fillRect(0, 0, state.nextCanvas.width, state.nextCanvas.height);
+                state.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                state.ctx.fillRect(0, 0, state.canvas.width, state.canvas.height);
+                state.ctx.fillStyle = 'white';
+                state.ctx.font = '14px "Silkscreen"';
+                state.ctx.textAlign = 'center';
+                state.ctx.fillText('PRESS START', state.canvas.width / 2, state.canvas.height / 2);
+            });
         }
-        
+
         showStartScreen();
     </script>
 </body>
